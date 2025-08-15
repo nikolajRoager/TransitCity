@@ -1,0 +1,45 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TransitCity.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="TransitCity.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="TransitCity">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
+        
+        <Grid Grid.Column="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="100"/>
+        </Grid.RowDefinitions>
+        <Image Grid.Row="0" Source="{Binding MapBitmap }" PointerPressed="OnMapPointerPressed"/>
+        <Border Grid.Row="1" BorderThickness="2" BorderBrush="Black">
+            <StackPanel Orientation="Horizontal">
+                <Button Command="{Binding MoveMapLeftCommand}">Left</Button>
+                <Button Command="{Binding MoveMapRightCommand}">Right</Button>
+                <Button Command="{Binding MoveMapUpCommand}">Up</Button>
+                <Button Command="{Binding MoveMapDownCommand}">Down</Button>
+                <Button Command="{Binding MoveMapInCommand}">Zoom in</Button>
+                <Button Command="{Binding MoveMapOutCommand}">Zoom out</Button>
+            </StackPanel>
+        </Border>
+        </Grid>
+        <Border Grid.Column="1" BorderThickness="2" BorderBrush="Black"/>
+    </Grid>
+    
+</Window>
