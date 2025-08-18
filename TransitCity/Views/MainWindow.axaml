@@ -24,11 +24,13 @@
         
         <Grid Grid.Column="0">
         <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="100"/>
         </Grid.RowDefinitions>
-        <Image Grid.Row="0" Source="{Binding MapBitmap }" PointerPressed="OnMapPointerPressed"/>
-        <Border Grid.Row="1" BorderThickness="2" BorderBrush="Black">
+            <TextBlock Grid.Row="0" Text="{Binding YardstickText}"/>
+        <Image Grid.Row="1" Source="{Binding MapBitmap }" PointerPressed="OnMapPointerPressed"/>
+        <Border Grid.Row="2" BorderThickness="2" BorderBrush="Black">
             <StackPanel Orientation="Horizontal">
                 <Button Command="{Binding MoveMapLeftCommand}">Left</Button>
                 <Button Command="{Binding MoveMapRightCommand}">Right</Button>
@@ -39,7 +41,15 @@
             </StackPanel>
         </Border>
         </Grid>
-        <Border Grid.Column="1" BorderThickness="2" BorderBrush="Black"/>
+        <Border Grid.Column="1" BorderThickness="2" BorderBrush="Black">
+            <StackPanel Orientation="Vertical">
+                <CheckBox IsChecked="{Binding ConnectionIsRoad}">Road</CheckBox>
+                <CheckBox IsChecked="{Binding ConnectionIsRail}">Rail</CheckBox>
+                <CheckBox IsChecked="{Binding ConnectionIsBicycle}">Bicycle</CheckBox>
+                <CheckBox IsChecked="{Binding ConnectionIsPedestrian}">Pedestrian</CheckBox>
+                <ComboBox HorizontalAlignment="Center" ItemsSource="{Binding ConnectionTypes}" SelectedValue="{Binding SelectedConnectionType}"/>
+            </StackPanel>
+        </Border>
     </Grid>
     
 </Window>

@@ -16,11 +16,17 @@ public class Node
     /// Location on the y-axis in meters
     /// </summary>
     public double Y;
+    
+    
+    public Dictionary<Node, Connection> Neighbours { get; private set; }
 
     public Node(int id, double x, double y)
     {
         Id = id;
         X = x;
         Y = y;
+        
+        //Will be set by the connections when added
+        Neighbours = new Dictionary<Node, Connection>();
     }
 }

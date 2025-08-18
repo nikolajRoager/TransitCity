@@ -8,25 +8,44 @@ public class MapImageGenerator
 {
     private static readonly int Width = 1400;
     private static readonly int Height= 900;
+    public static readonly float NodeRadius = 10;
 
-    public static float XToImageSpace(float x, float centerX, float scale)
+    public static float XGlobalToImageSpace(float xGlobal, float centerX, float scale)
     {
-        return (x - centerX)*scale + Width * 0.5f;
-    }
-
-    public static float YToImageSpace(float y, float centerY,float scale)
-    {
-        return (y - centerY)*scale + Height* 0.5f;
+        return (xGlobal - centerX)*scale + Width * 0.5f;
     }
     
-    public MemoryStream AsPngImage(Graph graph,float centerX, float centerY,float scale)
+    public static float YGlobalToImageSpace(float yGlobal, float centerY,float scale)
+    {
+        return (yGlobal - centerY)*scale + Height* 0.5f;
+    }
+
+    public static float XImageToGlobalSpace(float xImage, float centerX, float scale)
+    {
+        return (xImage - Width * 0.5f) / scale + centerX;
+    }
+
+    public static float YImageToGlobalSpace(float yImage, float centerY, float scale)
+    {
+        return (yImage - Height * 0.5f) / scale + centerY;
+    }
+    
+    
+    
+    public MemoryStream AsPngImage(Graph graph,float centerX, float centerY,float scale, int selectedNode, int selectedConnection)
     {
         
         var image = new SKImageInfo(Width,Height);
 
-        SKPaint unselectedNode = new SKPaint
+        SKPaint unselectedNodeColor = new SKPaint
         {
             Color = SKColors.MidnightBlue,
+            IsAntialias = true
+        };
+        
+        SKPaint selectedNodeColor = new SKPaint
+        {
+            Color = SKColors.Blue,
             IsAntialias = true
         };
 
@@ -36,9 +55,50 @@ public class MapImageGenerator
             IsAntialias = true,
             StrokeWidth = 3
         };
+
+        //Thick red line
+        SKPaint roadColor = new SKPaint
+        {
+            Color = SKColors.Red,
+            IsAntialias = true,
+            StrokeWidth = 8
+        };
         
-        float nodeRadius = 5;
+        /*
+        Motorvej=0,
+        Motortraffikvej=1,
+        Landevej=2,
+        Byvej=3,
+        LangsomZone=4,
+        Gaagade=5,
+        */
         
+        //Dashed, thick black line
+        SKPaint railColor = new SKPaint
+        {
+            Color = SKColors.Black,
+            IsAntialias = true,
+            StrokeWidth = 16,
+            PathEffect = SKPathEffect.CreateDash([4,8],0)
+        };
+        //Dot-dashed green line
+        SKPaint pedestrianColor = new SKPaint
+        {
+            Color = SKColors.Green,
+            IsAntialias = true,
+            StrokeWidth = 4,
+            PathEffect = SKPathEffect.CreateDash([4,2,2,2],0)
+        };
+        //Dotted yellow line
+        SKPaint bicycleColor = new SKPaint
+        {
+            Color = SKColors.Yellow,
+            IsAntialias = true,
+            StrokeWidth = 4,
+            PathEffect = SKPathEffect.CreateDash([4,4],0)
+        };
+
+
         
         
         using var bitmap = new SKBitmap(image);
@@ -46,15 +106,31 @@ public class MapImageGenerator
         {
             canvas.Clear(SKColors.LightGreen);
             
-            
-
-
             foreach (var node in graph.Nodes)
             {
+                //The node is selected, if it is selected, or any of its neighbours are selected
+                bool isSelected = (node.Id == selectedNode);
+                if (!isSelected && selectedConnection!=-1)
+                    foreach (var (_, con) in node.Neighbours)
+                    {
+                        if (con.Id == selectedConnection)
+                            isSelected = true;
+                    }
                 canvas.DrawCircle(
-                    XToImageSpace((float)node.X,centerX,scale),
-                    YToImageSpace((float)node.Y,centerY,scale),
-                    nodeRadius, unselectedNode);
+                    XGlobalToImageSpace((float)node.X,centerX,scale),
+                    YGlobalToImageSpace((float)node.Y,centerY,scale),
+                    NodeRadius, isSelected?selectedNodeColor:unselectedNodeColor);
+            }
+            foreach (var connection in graph.Connections)
+            {
+                if (connection.Road)
+                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),roadColor);
+                if (connection.Rail)
+                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),railColor);
+                if (connection.BicyclePath)
+                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),bicycleColor);
+                if (connection.PedestrianPath)
+                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),pedestrianColor);
             }
             
             //Draw a line we will use as a yardstick
