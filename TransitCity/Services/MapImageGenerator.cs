@@ -37,15 +37,26 @@ public class MapImageGenerator
         
         var image = new SKImageInfo(Width,Height);
 
-        SKPaint unselectedNodeColor = new SKPaint
+        SKPaint unselectedNodeColorNoParking = new SKPaint
         {
             Color = SKColors.MidnightBlue,
             IsAntialias = true
         };
-        
-        SKPaint selectedNodeColor = new SKPaint
+
+        SKPaint selectedNodeColorNoParking = new SKPaint
         {
             Color = SKColors.Blue,
+            IsAntialias = true
+        };
+        
+        SKPaint unselectedNodeColorParking = new SKPaint
+        {
+            Color = SKColors.BlueViolet,
+            IsAntialias = true
+        };
+        SKPaint selectedNodeColorParking = new SKPaint
+        {
+            Color = SKColors.Purple,
             IsAntialias = true
         };
 
@@ -57,21 +68,45 @@ public class MapImageGenerator
         };
 
         //Thick red line
-        SKPaint roadColor = new SKPaint
-        {
+        SKPaint[] roadColor = [
+        new SKPaint
+        {//Motorvej
+            Color = SKColors.Red,
+            IsAntialias = true,
+            StrokeWidth = 18
+        },
+        new SKPaint
+        {//Motortraffikvej
+            Color = SKColors.Red,
+            IsAntialias = true,
+            StrokeWidth = 16
+        },
+        new SKPaint
+        {//Landevej
+            Color = SKColors.Red,
+            IsAntialias = true,
+            StrokeWidth = 14
+        },
+        new SKPaint
+        {//byvej
+            Color = SKColors.Red,
+            IsAntialias = true,
+            StrokeWidth = 12
+        },
+        new SKPaint
+        {//Langsom Zone
+            Color = SKColors.Red,
+            IsAntialias = true,
+            StrokeWidth = 10
+        },
+        new SKPaint
+        {//Gågade
             Color = SKColors.Red,
             IsAntialias = true,
             StrokeWidth = 8
-        };
+        },
         
-        /*
-        Motorvej=0,
-        Motortraffikvej=1,
-        Landevej=2,
-        Byvej=3,
-        LangsomZone=4,
-        Gaagade=5,
-        */
+        ];
         
         //Dashed, thick black line
         SKPaint railColor = new SKPaint
@@ -119,12 +154,12 @@ public class MapImageGenerator
                 canvas.DrawCircle(
                     XGlobalToImageSpace((float)node.X,centerX,scale),
                     YGlobalToImageSpace((float)node.Y,centerY,scale),
-                    NodeRadius, isSelected?selectedNodeColor:unselectedNodeColor);
+                    NodeRadius, isSelected?(node.IsPublicParkingLot?selectedNodeColorParking:selectedNodeColorNoParking):(node.IsPublicParkingLot?unselectedNodeColorParking:unselectedNodeColorNoParking));
             }
             foreach (var connection in graph.Connections)
             {
                 if (connection.Road)
-                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),roadColor);
+                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),roadColor[(int)connection.Type]);
                 if (connection.Rail)
                     canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),railColor);
                 if (connection.BicyclePath)

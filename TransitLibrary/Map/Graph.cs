@@ -11,6 +11,21 @@ public class Graph
         Connections=new List<Connection>();
     }
 
+    public void DeleteNodeAtId(int id)
+    {
+        //Subtract all ids after the one we delete by 1
+        for (int i = id + 1; i < Nodes.Count; i++)
+            Nodes[i].Id--;
+        Nodes.RemoveAt(id);
+    }
+    public void DeleteConnectionAtId(int id)
+    {
+        //Subtract all ids after the one we delete by 1
+        for (int i = id + 1; i < Connections.Count; i++)
+            Connections[i].Id--;
+        Connections.RemoveAt(id);
+    }
+
     public void AddNode(Node node)
     {
         node.Id=Nodes.Count;

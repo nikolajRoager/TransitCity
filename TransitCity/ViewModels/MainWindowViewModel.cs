@@ -28,6 +28,38 @@ public partial class MainWindowViewModel : ViewModelBase
         set
         {
             _selectedConnectionType = value;
+
+            if (SelectedConnection != -1)
+            {
+                
+                Connection.RoadType newRoadType;
+                    
+                switch (_selectedConnectionType)
+                {
+                    case "Motorvej":
+                        newRoadType = Connection.RoadType.Motorvej;
+                        break;
+                    case "Motortraffikvej":
+                        newRoadType = Connection.RoadType.Motortraffikvej;
+                        break;
+                    case "Landevej":
+                        newRoadType = Connection.RoadType.Landevej;
+                        break;
+                    default:
+                    case "Byvej":
+                        newRoadType = Connection.RoadType.Byvej;
+                        break;
+                    case "Langsom Zone":
+                        newRoadType = Connection.RoadType.LangsomZone;
+                        break;
+                    case "Gågade":
+                        newRoadType = Connection.RoadType.Gaagade;
+                        break;
+                }
+                _mapGraph.Connections[SelectedConnection].Type= newRoadType;
+            }
+            OnPropertyChanged(nameof(MapBitmap));
+            
         }
     }
     
@@ -85,6 +117,20 @@ public partial class MainWindowViewModel : ViewModelBase
             //If there is a selected connection, update it
             if (SelectedConnection != -1)
                 _mapGraph.Connections[SelectedConnection].BicyclePath=_connectionIsBicycle;
+            OnPropertyChanged(nameof(MapBitmap));
+        }
+    }
+
+    private bool _nodeIsParkingLot;
+
+    public bool NodeIsParkingLot
+    {
+        get => _nodeIsParkingLot;
+        set
+        {
+            _nodeIsParkingLot = value;
+            if (SelectedNode!= -1)
+                _mapGraph.Nodes[SelectedNode].IsPublicParkingLot=_nodeIsParkingLot;
             OnPropertyChanged(nameof(MapBitmap));
         }
     }
@@ -173,12 +219,31 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    public void DeleteSelected()
+    {
+        if (SelectedNode != -1)
+        {
+            _mapGraph.DeleteNodeAtId(SelectedNode);
+            OnPropertyChanged(nameof(MapBitmap));
+            SelectedNode = -1;
+        }
+
+        if (SelectedConnection != -1)
+        {
+            _mapGraph.DeleteConnectionAtId(SelectedConnection);
+            OnPropertyChanged(nameof(MapBitmap));
+            SelectedConnection = -1;
+        }
+                
+    }
+
+    [RelayCommand]
     private void ImageClicked_AddNode(Point imagePoint)
     {
         var globalX = MapImageGenerator.XImageToGlobalSpace((float)imagePoint.X, CenterX, Scale);
         var globalY = MapImageGenerator.YImageToGlobalSpace((float)imagePoint.Y, CenterY, Scale);
         
-        _mapGraph.AddNode(new Node(0,globalX,globalY));
+        _mapGraph.AddNode(new Node(0,globalX,globalY,_nodeIsParkingLot));
         OnPropertyChanged(nameof(MapBitmap));
     }
 
@@ -264,32 +329,32 @@ public partial class MainWindowViewModel : ViewModelBase
                 {
                     Debug.WriteLine("create new connection");
 
-                    Connection.RoadType NewRoadType;
+                    Connection.RoadType newRoadType;
                     
                     switch (_selectedConnectionType)
                     {
                         case "Motorvej":
-                            NewRoadType = Connection.RoadType.Motorvej;
+                            newRoadType = Connection.RoadType.Motorvej;
                             break;
                         case "Motortraffikvej":
-                            NewRoadType = Connection.RoadType.Motortraffikvej;
+                            newRoadType = Connection.RoadType.Motortraffikvej;
                             break;
                         case "Landevej":
-                            NewRoadType = Connection.RoadType.Landevej;
+                            newRoadType = Connection.RoadType.Landevej;
                             break;
                         default:
                         case "Byvej":
-                            NewRoadType = Connection.RoadType.Byvej;
+                            newRoadType = Connection.RoadType.Byvej;
                             break;
                         case "Langsom Zone":
-                            NewRoadType = Connection.RoadType.LangsomZone;
+                            newRoadType = Connection.RoadType.LangsomZone;
                             break;
                         case "Gågade":
-                            NewRoadType = Connection.RoadType.Gaagade;
+                            newRoadType = Connection.RoadType.Gaagade;
                             break;
                     }
                     
-                    _mapGraph.AddConnection(new Connection(ConnectionIsRoad, NewRoadType,ConnectionIsRail,ConnectionIsPedestrian,ConnectionIsBicycle,_mapGraph.Nodes[SelectedNode],_mapGraph.Nodes[otherNode]));
+                    _mapGraph.AddConnection(new Connection(ConnectionIsRoad, newRoadType,ConnectionIsRail,ConnectionIsPedestrian,ConnectionIsBicycle,_mapGraph.Nodes[SelectedNode],_mapGraph.Nodes[otherNode]));
                 }
                 
                 //Deselect either way

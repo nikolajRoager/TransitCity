@@ -48,6 +48,8 @@
                 <CheckBox IsChecked="{Binding ConnectionIsBicycle}">Bicycle</CheckBox>
                 <CheckBox IsChecked="{Binding ConnectionIsPedestrian}">Pedestrian</CheckBox>
                 <ComboBox HorizontalAlignment="Center" ItemsSource="{Binding ConnectionTypes}" SelectedValue="{Binding SelectedConnectionType}"/>
+                <CheckBox IsChecked="{Binding NodeIsParkingLot}">Parking lot</CheckBox>
+                <Button Command="{Binding DeleteSelectedCommand}">Delete selected</Button>
             </StackPanel>
         </Border>
     </Grid>
