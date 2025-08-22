@@ -6,8 +6,8 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="TransitCity.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="TransitCity">
+        Icon="/Assets/motorvej.ico"
+        Title="Transit City">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -49,7 +49,8 @@
                 <CheckBox IsChecked="{Binding ConnectionIsPedestrian}">Pedestrian</CheckBox>
                 <ComboBox HorizontalAlignment="Center" ItemsSource="{Binding ConnectionTypes}" SelectedValue="{Binding SelectedConnectionType}"/>
                 <CheckBox IsChecked="{Binding NodeIsParkingLot}">Parking lot</CheckBox>
-                <Button Command="{Binding DeleteSelectedCommand}">Delete selected</Button>
+                <ComboBox HorizontalAlignment="Center" ItemsSource="{Binding NodeTypes}" SelectedValue="{Binding SelectedNodeType}"/>
+                <Button HorizontalAlignment="Center" Command="{Binding DeleteSelectedCommand}">Delete selected</Button>
             </StackPanel>
         </Border>
     </Grid>

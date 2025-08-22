@@ -37,30 +37,43 @@ public class MapImageGenerator
         
         var image = new SKImageInfo(Width,Height);
 
-        SKPaint unselectedNodeColorNoParking = new SKPaint
+        //First, define a lot of constant shapes and colors  
+        var noneNodeRect = new SKRect();
+        noneNodeRect.Size = new SKSize(NodeRadius*2, NodeRadius*2);
+ 
+        var signalNodeCross0 = new SKRect
+        {
+            Size = new SKSize(NodeRadius*4, NodeRadius)
+        };
+        var signalNodeCross1 = new SKRect
+        {
+            Size = new SKSize(NodeRadius, NodeRadius*4)
+        };
+
+        var unselectedNodeColorNoParking = new SKPaint
         {
             Color = SKColors.MidnightBlue,
             IsAntialias = true
         };
 
-        SKPaint selectedNodeColorNoParking = new SKPaint
+        var selectedNodeColorNoParking = new SKPaint
         {
             Color = SKColors.Blue,
             IsAntialias = true
         };
         
-        SKPaint unselectedNodeColorParking = new SKPaint
+        var unselectedNodeColorParking = new SKPaint
         {
             Color = SKColors.BlueViolet,
             IsAntialias = true
         };
-        SKPaint selectedNodeColorParking = new SKPaint
+        var selectedNodeColorParking = new SKPaint
         {
             Color = SKColors.Purple,
             IsAntialias = true
         };
 
-        SKPaint yardstick= new SKPaint
+        var yardstick= new SKPaint
         {
             Color = SKColors.Red,
             IsAntialias = true,
@@ -69,43 +82,42 @@ public class MapImageGenerator
 
         //Thick red line
         SKPaint[] roadColor = [
-        new SKPaint
-        {//Motorvej
-            Color = SKColors.Red,
-            IsAntialias = true,
-            StrokeWidth = 18
-        },
-        new SKPaint
-        {//Motortraffikvej
-            Color = SKColors.Red,
-            IsAntialias = true,
-            StrokeWidth = 16
-        },
-        new SKPaint
-        {//Landevej
-            Color = SKColors.Red,
-            IsAntialias = true,
-            StrokeWidth = 14
-        },
-        new SKPaint
-        {//byvej
-            Color = SKColors.Red,
-            IsAntialias = true,
-            StrokeWidth = 12
-        },
-        new SKPaint
-        {//Langsom Zone
-            Color = SKColors.Red,
-            IsAntialias = true,
-            StrokeWidth = 10
-        },
-        new SKPaint
-        {//Gågade
-            Color = SKColors.Red,
-            IsAntialias = true,
-            StrokeWidth = 8
-        },
-        
+            new SKPaint
+            {//Motorvej
+                Color = SKColors.Red,
+                IsAntialias = true,
+                StrokeWidth = 18
+            },
+            new SKPaint
+            {//Motortraffikvej
+                Color = SKColors.Red,
+                IsAntialias = true,
+                StrokeWidth = 16
+            },
+            new SKPaint
+            {//Landevej
+                Color = SKColors.Red,
+                IsAntialias = true,
+                StrokeWidth = 14
+            },
+            new SKPaint
+            {//byvej
+                Color = SKColors.Red,
+                IsAntialias = true,
+                StrokeWidth = 12
+            },
+            new SKPaint
+            {//Langsom Zone
+                Color = SKColors.Red,
+                IsAntialias = true,
+                StrokeWidth = 10
+            },
+            new SKPaint
+            {//Gågade
+                Color = SKColors.Red,
+                IsAntialias = true,
+                StrokeWidth = 8
+            },
         ];
         
         //Dashed, thick black line
@@ -137,48 +149,69 @@ public class MapImageGenerator
         
         
         using var bitmap = new SKBitmap(image);
-        using (var canvas = new SKCanvas(bitmap))
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.LightGreen);
+        foreach (var connection in graph.Connections)
         {
-            canvas.Clear(SKColors.LightGreen);
-            
-            foreach (var node in graph.Nodes)
-            {
-                //The node is selected, if it is selected, or any of its neighbours are selected
-                bool isSelected = (node.Id == selectedNode);
-                if (!isSelected && selectedConnection!=-1)
-                    foreach (var (_, con) in node.Neighbours)
-                    {
-                        if (con.Id == selectedConnection)
-                            isSelected = true;
-                    }
-                canvas.DrawCircle(
-                    XGlobalToImageSpace((float)node.X,centerX,scale),
-                    YGlobalToImageSpace((float)node.Y,centerY,scale),
-                    NodeRadius, isSelected?(node.IsPublicParkingLot?selectedNodeColorParking:selectedNodeColorNoParking):(node.IsPublicParkingLot?unselectedNodeColorParking:unselectedNodeColorNoParking));
-            }
-            foreach (var connection in graph.Connections)
-            {
-                if (connection.Road)
-                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),roadColor[(int)connection.Type]);
-                if (connection.Rail)
-                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),railColor);
-                if (connection.BicyclePath)
-                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),bicycleColor);
-                if (connection.PedestrianPath)
-                    canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),pedestrianColor);
-            }
-            
-            //Draw a line we will use as a yardstick
-            canvas.DrawLine(50,50,250,50,yardstick);
-            
-            
-            //Stupid hack: convert image to Png, then convert png back to avalonia bitmap
-            //This is slower than making a dedicated Skiashap Avalonia control, but way easier, and more flexible, as we can also send the output of this over the internet, or save it to a file.
-            var imageStream = new MemoryStream();
-            bitmap.Encode(imageStream, SKEncodedImageFormat.Png, 50);
-            imageStream.Position = 0;
-        
-            return imageStream;
+            if (connection.Road)
+                canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),roadColor[(int)connection.Type]);
+            if (connection.Rail)
+                canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),railColor);
+            if (connection.BicyclePath)
+                canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),bicycleColor);
+            if (connection.PedestrianPath)
+                canvas.DrawLine(XGlobalToImageSpace((float)connection.From.X,centerX,scale), YGlobalToImageSpace((float)connection.From.Y,centerY,scale), XGlobalToImageSpace((float)connection.To.X,centerX,scale), YGlobalToImageSpace((float)connection.To.Y,centerY,scale),pedestrianColor);
         }
+        foreach (var node in graph.Nodes)
+        {
+            //The node is selected if it is selected, or any of its neighbors are selected
+            bool isSelected = (node.Id == selectedNode);
+            if (!isSelected && selectedConnection!=-1)
+                foreach (var (_, con) in node.Neighbours)
+                {
+                    if (con.Id == selectedConnection)
+                        isSelected = true;
+                }
+                
+                
+
+            var nodeColor = isSelected
+                ? (node.IsPublicParkingLot ? selectedNodeColorParking : selectedNodeColorNoParking)
+                : (node.IsPublicParkingLot ? unselectedNodeColorParking : unselectedNodeColorNoParking);
+
+
+            switch (node.Type)
+            {
+                default:
+                case Node.IntersectionType.Roundabout:
+                    canvas.DrawCircle(
+                        XGlobalToImageSpace((float)node.X,centerX,scale),
+                        YGlobalToImageSpace((float)node.Y,centerY,scale),
+                        NodeRadius, nodeColor);
+                    break;
+                case Node.IntersectionType.None:
+                    noneNodeRect.Location = new SKPoint(XGlobalToImageSpace((float)node.X,centerX,scale)-NodeRadius, YGlobalToImageSpace((float)node.Y,centerY,scale)-NodeRadius);
+                    canvas.DrawRect(noneNodeRect, nodeColor);
+                    break;
+                case Node.IntersectionType.TrafficLight:
+                    signalNodeCross0.Location = new SKPoint(XGlobalToImageSpace((float)node.X,centerX,scale)-NodeRadius*2, YGlobalToImageSpace((float)node.Y,centerY,scale)-NodeRadius/2);
+                    signalNodeCross1.Location = new SKPoint(XGlobalToImageSpace((float)node.X,centerX,scale)-NodeRadius/2, YGlobalToImageSpace((float)node.Y,centerY,scale)-NodeRadius*2);
+                    canvas.DrawRect(signalNodeCross0, nodeColor);
+                    canvas.DrawRect(signalNodeCross1, nodeColor);
+                    break;
+            }
+        }
+            
+        //Draw a line we will use as a yardstick
+        canvas.DrawLine(50,50,250,50,yardstick);
+            
+            
+        //Stupid hack: convert image to Png, then convert png back to avalonia bitmap
+        //This is slower than making a dedicated Skiashap Avalonia control, but way easier, and more flexible, as we can also send the output of this over the internet, or save it to a file.
+        var imageStream = new MemoryStream();
+        bitmap.Encode(imageStream, SKEncodedImageFormat.Png, 50);
+        imageStream.Position = 0;
+        
+        return imageStream;
     }
 }

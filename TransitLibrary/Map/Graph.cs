@@ -16,6 +16,12 @@ public class Graph
         //Subtract all ids after the one we delete by 1
         for (int i = id + 1; i < Nodes.Count; i++)
             Nodes[i].Id--;
+        //Remove all connections
+        foreach (var (_, c) in Nodes[id].Neighbours)
+        {
+            DeleteConnectionAtId(c.Id);
+        }
+            
         Nodes.RemoveAt(id);
     }
     public void DeleteConnectionAtId(int id)
@@ -23,6 +29,9 @@ public class Graph
         //Subtract all ids after the one we delete by 1
         for (int i = id + 1; i < Connections.Count; i++)
             Connections[i].Id--;
+        //Remove from all nodes
+        Connections[id].From.Neighbours.Remove(Connections[id].To);
+        Connections[id].To.Neighbours.Remove(Connections[id].From);
         Connections.RemoveAt(id);
     }
 

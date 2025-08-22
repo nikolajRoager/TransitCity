@@ -12,6 +12,43 @@ namespace TransitCity.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
 
+    private Node.IntersectionType _newNodeType=Node.IntersectionType.None;
+
+    private string _selectedNodeType = "None";
+    public string SelectedNodeType
+    {
+        get => _selectedNodeType;
+        set
+        {
+            _selectedNodeType= value;
+            switch (_selectedNodeType)
+            {
+                default:
+                case "None":
+                    _newNodeType=Node.IntersectionType.None;
+                    break;
+                case "Traffic Lights":
+                    _newNodeType=Node.IntersectionType.TrafficLight;
+                    break;
+                case "Roundabout":
+                    _newNodeType=Node.IntersectionType.Roundabout;
+                    break;
+            }
+
+            if (SelectedNode != -1)
+            {
+                _mapGraph.Nodes[SelectedNode].Type=_newNodeType;
+                OnPropertyChanged(nameof(MapBitmap));
+            }
+        }
+    }
+    public List<string> NodeTypes { get; private set; } = [
+        "None",
+        "Traffic Lights",
+        "Roundabout",
+    ];
+    
+    
     public List<string> ConnectionTypes { get; private set; } = [
     "Motorvej",
     "Motortraffikvej",
@@ -149,7 +186,7 @@ public partial class MainWindowViewModel : ViewModelBase
     
     public MapImageGenerator Generator { get; private set; } = new();
 
-    private Graph _mapGraph;
+    private readonly Graph _mapGraph;
 
     public MainWindowViewModel()
     {
@@ -224,16 +261,15 @@ public partial class MainWindowViewModel : ViewModelBase
         if (SelectedNode != -1)
         {
             _mapGraph.DeleteNodeAtId(SelectedNode);
-            OnPropertyChanged(nameof(MapBitmap));
             SelectedNode = -1;
         }
 
         if (SelectedConnection != -1)
         {
             _mapGraph.DeleteConnectionAtId(SelectedConnection);
-            OnPropertyChanged(nameof(MapBitmap));
             SelectedConnection = -1;
         }
+        OnPropertyChanged(nameof(MapBitmap));
                 
     }
 
@@ -243,7 +279,7 @@ public partial class MainWindowViewModel : ViewModelBase
         var globalX = MapImageGenerator.XImageToGlobalSpace((float)imagePoint.X, CenterX, Scale);
         var globalY = MapImageGenerator.YImageToGlobalSpace((float)imagePoint.Y, CenterY, Scale);
         
-        _mapGraph.AddNode(new Node(0,globalX,globalY,_nodeIsParkingLot));
+        _mapGraph.AddNode(new Node(0,globalX,globalY,_nodeIsParkingLot,_newNodeType));
         OnPropertyChanged(nameof(MapBitmap));
     }
 
