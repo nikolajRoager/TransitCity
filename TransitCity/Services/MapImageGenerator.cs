@@ -10,6 +10,18 @@ public class MapImageGenerator
     private static readonly int Height= 900;
     public static readonly float NodeRadius = 10;
 
+
+    private SKBitmap? _backgroundBitmap;
+    public MapImageGenerator(Stream pngStream)
+    {
+        // Reset stream position in case it has been read before
+        pngStream.Position = 0;
+
+        // Decode the PNG from the stream
+        using var skStream = new SKManagedStream(pngStream);
+        _backgroundBitmap = SKBitmap.Decode(skStream);
+    }
+
     public static float XGlobalToImageSpace(float xGlobal, float centerX, float scale)
     {
         return (xGlobal - centerX)*scale + Width * 0.5f;
@@ -146,11 +158,23 @@ public class MapImageGenerator
         };
 
 
-        
-        
+        //Now actually get ready to draw
         using var bitmap = new SKBitmap(image);
         using var canvas = new SKCanvas(bitmap);
+        
+        //Grass I guess
         canvas.Clear(SKColors.LightGreen);
+
+        if (_backgroundBitmap != null)
+        {
+            float posX = XGlobalToImageSpace(0f, centerX, scale);
+            float posY = YGlobalToImageSpace(0f, centerY, scale);
+            float height = _backgroundBitmap.Height*scale;
+            float width = _backgroundBitmap.Width*scale;
+            canvas.DrawBitmap(_backgroundBitmap, new SKRect(posX,posY,posX+width,posY+height));
+        }
+        
+        
         foreach (var connection in graph.Connections)
         {
             if (connection.Road)

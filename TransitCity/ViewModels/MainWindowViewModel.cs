@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using Avalonia;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using CommunityToolkit.Mvvm.Input;
 using TransitCity.Services;
 using TransitLibrary.Graph;
@@ -182,15 +184,18 @@ public partial class MainWindowViewModel : ViewModelBase
     public int SelectedConnection { get; set; } = -1;
     
     public string YardstickText {get; set; } ="Yardstick: 200m";
-    
-    
-    public MapImageGenerator Generator { get; private set; } = new();
+
+
+    public MapImageGenerator Generator;
 
     private readonly Graph _mapGraph;
 
     public MainWindowViewModel()
     {
+        
+        Stream mapStream = AssetLoader.Open(new Uri("avares://TransitCity/Assets/map.png"));
         _mapGraph = new Graph();
+        Generator = new MapImageGenerator(mapStream);
     }
     
     public Bitmap MapBitmap
