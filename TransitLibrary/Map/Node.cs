@@ -1,4 +1,4 @@
-namespace TransitLibrary.Graph;
+namespace TransitLibrary.Map;
 
 public class Node
 {

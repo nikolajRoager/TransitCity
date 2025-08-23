@@ -1,6 +1,6 @@
 using System.IO;
 using SkiaSharp;
-using TransitLibrary.Graph;
+using TransitLibrary.Map;
 
 namespace TransitCity.Services;
 

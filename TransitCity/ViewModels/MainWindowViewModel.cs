@@ -7,7 +7,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using CommunityToolkit.Mvvm.Input;
 using TransitCity.Services;
-using TransitLibrary.Graph;
+using TransitLibrary.Map;
 
 namespace TransitCity.ViewModels;
 
@@ -37,9 +37,9 @@ public partial class MainWindowViewModel : ViewModelBase
                     break;
             }
 
-            if (SelectedNode != -1)
+            if (_selectedNode != -1)
             {
-                _mapGraph.Nodes[SelectedNode].Type=_newNodeType;
+                _mapGraph.Nodes[_selectedNode].Type=_newNodeType;
                 OnPropertyChanged(nameof(MapBitmap));
             }
         }
@@ -68,7 +68,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             _selectedConnectionType = value;
 
-            if (SelectedConnection != -1)
+            if (_selectedConnection != -1)
             {
                 
                 Connection.RoadType newRoadType;
@@ -95,7 +95,7 @@ public partial class MainWindowViewModel : ViewModelBase
                         newRoadType = Connection.RoadType.Gaagade;
                         break;
                 }
-                _mapGraph.Connections[SelectedConnection].Type= newRoadType;
+                _mapGraph.Connections[_selectedConnection].Type= newRoadType;
             }
             OnPropertyChanged(nameof(MapBitmap));
             
@@ -103,10 +103,10 @@ public partial class MainWindowViewModel : ViewModelBase
     }
     
     
-    private bool _connectionIsRoad { get; set; } = true;
-    private bool _connectionIsRail { get; set; } = false;
-    private bool _connectionIsPedestrian { get; set; } = true;
-    private bool _connectionIsBicycle { get; set; } = true;
+    private bool _connectionIsRoad = true;
+    private bool _connectionIsRail = false;
+    private bool _connectionIsPedestrian = true;
+    private bool _connectionIsBicycle = true;
 
     public bool ConnectionIsRoad
     {
@@ -115,8 +115,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             _connectionIsRoad = value;
             //If there is a selected connection, update it
-            if (SelectedConnection != -1)
-                _mapGraph.Connections[SelectedConnection].Road=_connectionIsRoad;
+            if (_selectedConnection != -1)
+                _mapGraph.Connections[_selectedConnection].Road=_connectionIsRoad;
             OnPropertyChanged(nameof(MapBitmap));
         }
     }
@@ -128,8 +128,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             _connectionIsRail = value;
             //If there is a selected connection, update it
-            if (SelectedConnection != -1)
-                _mapGraph.Connections[SelectedConnection].Rail=_connectionIsRail;
+            if (_selectedConnection != -1)
+                _mapGraph.Connections[_selectedConnection].Rail=_connectionIsRail;
             OnPropertyChanged(nameof(MapBitmap));
         }
     }
@@ -141,8 +141,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             _connectionIsPedestrian = value;
             //If there is a selected connection, update it
-            if (SelectedConnection != -1)
-                _mapGraph.Connections[SelectedConnection].PedestrianPath=_connectionIsPedestrian;
+            if (_selectedConnection != -1)
+                _mapGraph.Connections[_selectedConnection].PedestrianPath=_connectionIsPedestrian;
             OnPropertyChanged(nameof(MapBitmap));
         }
     }
@@ -154,8 +154,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             _connectionIsBicycle = value;
             //If there is a selected connection, update it
-            if (SelectedConnection != -1)
-                _mapGraph.Connections[SelectedConnection].BicyclePath=_connectionIsBicycle;
+            if (_selectedConnection != -1)
+                _mapGraph.Connections[_selectedConnection].BicyclePath=_connectionIsBicycle;
             OnPropertyChanged(nameof(MapBitmap));
         }
     }
@@ -168,8 +168,8 @@ public partial class MainWindowViewModel : ViewModelBase
         set
         {
             _nodeIsParkingLot = value;
-            if (SelectedNode!= -1)
-                _mapGraph.Nodes[SelectedNode].IsPublicParkingLot=_nodeIsParkingLot;
+            if (_selectedNode!= -1)
+                _mapGraph.Nodes[_selectedNode].IsPublicParkingLot=_nodeIsParkingLot;
             OnPropertyChanged(nameof(MapBitmap));
         }
     }
@@ -180,22 +180,43 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public float Scale { get; set; } = 1.0f;
 
-    public int SelectedNode { get; set; } = -1;
-    public int SelectedConnection { get; set; } = -1;
+    private int _selectedNode = -1;
+    private int _selectedConnection = -1;
     
     public string YardstickText {get; set; } ="Yardstick: 200m";
 
 
-    public MapImageGenerator Generator;
+    private readonly MapImageGenerator _generator;
 
-    private readonly Graph _mapGraph;
+    private Graph _mapGraph;
 
+    private string _saveFileName = "save";
+
+    public string SaveFileName
+    {
+        get=>_saveFileName;
+        set
+        {
+            _saveFileName = value;
+            
+            //Make sure this can be used as a save file name, this may not be displayed instantly, but as long as it is updated behind the scenes I don't care
+            
+            //Get invalid characters in a filename
+            var invalidChars = Path.GetInvalidFileNameChars();
+            //Fix it
+            foreach (var c in invalidChars)
+                _saveFileName = _saveFileName.Replace(c, '_');
+            //I especially don't like spaces
+            _saveFileName = _saveFileName.Replace(' ', '_');
+        }
+    }
+    
     public MainWindowViewModel()
     {
         
         Stream mapStream = AssetLoader.Open(new Uri("avares://TransitCity/Assets/map.png"));
         _mapGraph = new Graph();
-        Generator = new MapImageGenerator(mapStream);
+        _generator = new MapImageGenerator(mapStream);
     }
     
     public Bitmap MapBitmap
@@ -203,13 +224,13 @@ public partial class MainWindowViewModel : ViewModelBase
         get
         {
             Debug.WriteLine("CALL PNG CONVERTER");
-            var pngStream = Generator.AsPngImage(_mapGraph,CenterX, CenterY,Scale,SelectedNode,SelectedConnection);
+            var pngStream = _generator.AsPngImage(_mapGraph,CenterX, CenterY,Scale,_selectedNode,_selectedConnection);
             return new Bitmap(pngStream);
         }
     }
 
     [RelayCommand]
-    public void MoveMapLeft()
+    private void MoveMapLeft()
     {
         CenterX -= 100/Scale;
         OnPropertyChanged(nameof(CenterX));
@@ -217,7 +238,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void MoveMapRight()
+    private void MoveMapRight()
     {
         CenterX += 100/Scale;
         OnPropertyChanged(nameof(CenterX));
@@ -225,7 +246,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void MoveMapUp()
+    private void MoveMapUp()
     {
         CenterY -= 100/Scale;
         OnPropertyChanged(nameof(CenterY));
@@ -233,7 +254,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void MoveMapDown()
+    private void MoveMapDown()
     {
         CenterY += 100/Scale;
         OnPropertyChanged(nameof(CenterY));
@@ -241,7 +262,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void MoveMapIn()
+    private void MoveMapIn()
     {
         Scale *= 2;
         OnPropertyChanged(nameof(Scale));
@@ -251,7 +272,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void MoveMapOut()
+    private void MoveMapOut()
     {
         Scale *= 0.5f;
         OnPropertyChanged(nameof(Scale));
@@ -261,21 +282,57 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void DeleteSelected()
+    private void Save()
     {
-        if (SelectedNode != -1)
-        {
-            _mapGraph.DeleteNodeAtId(SelectedNode);
-            SelectedNode = -1;
-        }
+        //Get windows appdata, or linux .local, or mac application support
+        string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string myAppDataFolder = Path.Combine(appDataPath, "TransitCity");
+        Directory.CreateDirectory(myAppDataFolder);
+        
+        string outputPath = Path.ChangeExtension(Path.Combine(myAppDataFolder, _saveFileName),".xml");
+        
+        Console.WriteLine($"Saving graph as {outputPath}");
+        _mapGraph.Save(outputPath);
+    }
 
-        if (SelectedConnection != -1)
+    [RelayCommand]
+    private void Load()
+    {
+        //Get windows appdata, or linux .local, or mac application support
+        string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string myAppDataFolder = Path.Combine(appDataPath, "TransitCity");
+        Directory.CreateDirectory(myAppDataFolder);
+        
+        string outputPath = Path.ChangeExtension(Path.Combine(myAppDataFolder, _saveFileName),".xml");
+        
+        Console.WriteLine($"Loading graph as {outputPath}");
+        try
         {
-            _mapGraph.DeleteConnectionAtId(SelectedConnection);
-            SelectedConnection = -1;
+            _mapGraph.Load(outputPath);
+        }
+        catch (Exception ex)
+        {
+            //Didn't work... since the loading fails safe, there is no need to clean up the map
+            Console.WriteLine($"Could not load graph, error: {ex.Message}");
         }
         OnPropertyChanged(nameof(MapBitmap));
-                
+    }
+
+    [RelayCommand]
+    private void DeleteSelected()
+    {
+        if (_selectedNode != -1)
+        {
+            _mapGraph.DeleteNodeAtId(_selectedNode);
+            _selectedNode = -1;
+        }
+
+        if (_selectedConnection != -1)
+        {
+            _mapGraph.DeleteConnectionAtId(_selectedConnection);
+            _selectedConnection = -1;
+        }
+        OnPropertyChanged(nameof(MapBitmap));
     }
 
     [RelayCommand]
@@ -292,7 +349,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ImageClicked_SelectNode(Point imagePoint)
     {
-        SelectedConnection = -1;
+        _selectedConnection = -1;
         //Select a new node by right-clicking, if another node is already s     elected we will create a connection and unselect both instead
         int otherNode = -1;
         
@@ -312,22 +369,22 @@ public partial class MainWindowViewModel : ViewModelBase
         if (otherNode != -1)
         {
             //This is the first selection, select it
-            if (SelectedNode == -1)
+            if (_selectedNode == -1)
             {
-                SelectedNode = otherNode;
+                _selectedNode = otherNode;
             }
             //This is the second selection, either make a new connection, or select the existing one
             else
             {
                 //Do nothing if clicked the same node
-                if (SelectedNode == otherNode)
+                if (_selectedNode == otherNode)
                 {
                 }
                 //Check if there is an existing connection
-                else if (_mapGraph.Nodes[SelectedNode].Neighbours.ContainsKey(_mapGraph.Nodes[otherNode]))
+                else if (_mapGraph.Nodes[_selectedNode].Neighbours.ContainsKey(_mapGraph.Nodes[otherNode]))
                 {
-                    var connection = _mapGraph.Nodes[SelectedNode].Neighbours[_mapGraph.Nodes[otherNode]];
-                    SelectedConnection = connection.Id;
+                    var connection = _mapGraph.Nodes[_selectedNode].Neighbours[_mapGraph.Nodes[otherNode]];
+                    _selectedConnection = connection.Id;
                     
                     //Make sure the selected settings match the selected connection
                     _connectionIsBicycle = connection.BicyclePath;
@@ -364,7 +421,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     OnPropertyChanged(nameof(ConnectionIsRoad));
                     OnPropertyChanged(nameof(SelectedConnectionType));
                     
-                    Debug.WriteLine($"Select existing connection {SelectedConnection}");
+                    Debug.WriteLine($"Select existing connection {_selectedConnection}");
                 }
                 else
                 {
@@ -395,17 +452,17 @@ public partial class MainWindowViewModel : ViewModelBase
                             break;
                     }
                     
-                    _mapGraph.AddConnection(new Connection(ConnectionIsRoad, newRoadType,ConnectionIsRail,ConnectionIsPedestrian,ConnectionIsBicycle,_mapGraph.Nodes[SelectedNode],_mapGraph.Nodes[otherNode]));
+                    _mapGraph.AddConnection(new Connection(ConnectionIsRoad, newRoadType,ConnectionIsRail,ConnectionIsPedestrian,ConnectionIsBicycle,_mapGraph.Nodes[_selectedNode],_mapGraph.Nodes[otherNode]));
                 }
                 
                 //Deselect either way
-                SelectedNode = -1;
+                _selectedNode = -1;
             }
         }
         else
         {
             //You clicked somewhere else, unselect everything
-            SelectedNode = -1;
+            _selectedNode = -1;
         }
         
         OnPropertyChanged(nameof(MapBitmap));

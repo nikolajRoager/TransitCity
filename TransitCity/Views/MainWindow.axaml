@@ -51,6 +51,9 @@
                 <CheckBox IsChecked="{Binding NodeIsParkingLot}">Parking lot</CheckBox>
                 <ComboBox HorizontalAlignment="Center" ItemsSource="{Binding NodeTypes}" SelectedValue="{Binding SelectedNodeType}"/>
                 <Button HorizontalAlignment="Center" Command="{Binding DeleteSelectedCommand}">Delete selected</Button>
+                <TextBox HorizontalAlignment="Center" Text="{Binding SaveFileName}" ></TextBox>
+                <Button HorizontalAlignment="Center" Command="{Binding SaveCommand}">Save graph</Button>
+                <Button HorizontalAlignment="Center" Command="{Binding LoadCommand}">Load graph</Button>
             </StackPanel>
         </Border>
     </Grid>
